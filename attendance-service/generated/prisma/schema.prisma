@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AttendanceRecord {
+  id                String            @id @default(uuid())
+  userId            String // ID del usuario (sin @relation)
+  agencyId          String // ID de la agencia (sin @relation)
+  checkInTime       DateTime // Hora exacta de entrada
+  scheduleEntryTime String? // Hora de entrada programada "HH:MM" (para referencia, obtenida de schedule-service)
+  status            AttendanceStatus? // ON_TIME, LATE (calculado al marcar entrada)
+  checkOutTime      DateTime? // Hora exacta de salida
+  scheduleExitTime  String? // Hora de salida programada "HH:MM" (para referencia, obtenida de schedule-service)
+  date              DateTime          @db.Date // Solo la FECHA del registro (importante para unicidad y búsquedas)
+  methodIn          AttendanceMethod // Método de entrada (MANUAL, QR, etc.)
+  methodOut         AttendanceMethod? // Método de salida
+  notes             String?
+
+  @@unique([userId, date]) // Solo un registro por usuario por día
+  @@index([agencyId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+enum AttendanceStatus {
+  ON_TIME
+  LATE
+  // Podrías añadir ABSENT si tienes lógica para marcar ausencias
+}
+
+enum AttendanceMethod {
+  MANUAL // Registrado por la agencia
+  QR // Registrado por el usuario con QR
+  NFC // Futuro método
+  // OTHER
+}

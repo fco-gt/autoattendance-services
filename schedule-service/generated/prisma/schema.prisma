@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model WorkSchedule {
+  id                 String   @id @default(uuid())
+  agencyId           String
+  name               String
+  daysOfWeek         Int[]
+  entryTime          String
+  exitTime           String
+  gracePeriodMinutes Int      @default(10)
+  isDefault          Boolean  @default(false)
+  assignedUserIds    String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([agencyId, name])
+  @@index([agencyId])
+  @@index([isDefault])
+}
