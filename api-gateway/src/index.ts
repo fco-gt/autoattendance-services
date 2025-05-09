@@ -14,6 +14,7 @@ const USER_SERVICE_URL = process.env.USER_SERVICE_URL;
 const SCHEDULE_SERVICE_URL = process.env.SCHEDULE_SERVICE_URL;
 const ATTENDANCE_SERVICE_URL = process.env.ATTENDANCE_SERVICE_URL;
 const FRONTEND_URL = process.env.FRONTEND_URL;
+const FRONTEND_APP_URL = process.env.FRONTEND_APP_URL;
 const USER_SECRET = process.env.USER_JWT_SECRET;
 const AGENCY_SECRET = process.env.AGENCY_JWT_SECRET;
 
@@ -23,6 +24,7 @@ if (
   !SCHEDULE_SERVICE_URL ||
   !ATTENDANCE_SERVICE_URL ||
   !FRONTEND_URL ||
+  !FRONTEND_APP_URL ||
   !USER_SECRET ||
   !AGENCY_SECRET
 ) {
@@ -50,7 +52,7 @@ const resolvePath = (req: Request, servicePrefix: string) => {
 // --- Middlewares Globales ---
 app.use(
   cors({
-    origin: ["http://localhost:3000", FRONTEND_URL],
+    origin: ["http://localhost:3000", FRONTEND_URL, FRONTEND_APP_URL],
     credentials: true,
   })
 );
