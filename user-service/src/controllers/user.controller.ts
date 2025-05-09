@@ -7,6 +7,7 @@ import prisma from "../db";
 import {
   ActivateInvitationInput,
   CreateUserInvitationInput,
+  GetUsersQueryInput,
 } from "../validations/user.validations";
 import {
   BadRequestError,
@@ -223,5 +224,24 @@ export const createInvitation: RequestHandler = async (req, res, next) => {
   } catch (error) {
     logger.error("Error creating invitation:", error);
     next(error);
+  }
+};
+
+export const getUsersForAgency: RequestHandler = async (req, res, next) => {
+  const { agencyId } = req.query as GetUsersQueryInput;
+
+  try {
+    const users = await prisma.user.findMany({
+      where: { agencyId },
+      select: userPublicSelect,
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    res.status(200).json(users);
+  } catch (error) {
+    logger.error("Error obteniendo usuarios para agencia:", error);
+    next(new InternalServerError("Error obteniendo usuarios"));
   }
 };

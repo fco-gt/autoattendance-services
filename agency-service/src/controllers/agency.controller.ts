@@ -258,3 +258,48 @@ export const inviteUser: RequestHandler = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getMyUsers: RequestHandler = async (req, res, next) => {
+  const agencyId = req.headers["x-agency-id"] as string;
+  const userServiceUrl = process.env.USER_SERVICE_URL;
+
+  if (!agencyId) {
+    return next(new UnauthorizedError("No autenticado correctamente"));
+  }
+
+  if (!userServiceUrl) {
+    logger.error("No se pudo encontrar el servicio de usuarios");
+    return next(
+      new InternalServerError("No se pudo encontrar el servicio de usuarios")
+    );
+  }
+
+  try {
+    logger.info(`Calling user-service to get users for agency ${agencyId}`);
+
+    const response = await axios.get(`${userServiceUrl}/v1/api/users/agency`, {
+      params: {
+        agencyId: agencyId,
+      },
+    });
+
+    res.status(200).json(response.data);
+  } catch (error: any) {
+    if (axios.isAxiosError(error) && error.response) {
+      logger.error(
+        `Error calling user-service: ${error.response.status}`,
+        error.response.data
+      );
+
+      throw new BadRequestError(
+        error.response.data.message ||
+          "Error al obtener usuarios en el servicio de usuarios"
+      );
+    } else {
+      logger.error("Failed to call user-service:", error);
+      throw new InternalServerError(
+        "No se pudo comunicar con el servicio de usuarios"
+      );
+    }
+  }
+};

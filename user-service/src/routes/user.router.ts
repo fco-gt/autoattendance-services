@@ -12,6 +12,7 @@ import {
   getMe,
   validateUserAgency,
   createInvitation,
+  getUsersForAgency,
 } from "../controllers/user.controller";
 
 const router = Router();
@@ -41,5 +42,8 @@ router.post(
 
 // GET /users/me -> Obtiene datos del usuario autenticado
 router.get("/me", getMe);
+
+// GET /users/agency?agencyId-> Obtiene todos los usuarios de una agencia
+router.get("/agency", getUsersForAgency);
 
 export default router;

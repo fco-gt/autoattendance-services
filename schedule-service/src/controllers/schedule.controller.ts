@@ -92,6 +92,36 @@ export const getSchedules: RequestHandler = async (req, res, next) => {
   }
 };
 
+export const getSchedule: RequestHandler = async (req, res, next) => {
+  const scheduleId = req.params.id;
+  const agencyId = req.headers["x-agency-id"] as string;
+
+  if (!agencyId) {
+    return next(new UnauthorizedError("Agencia no autenticada correctamente"));
+  }
+
+  try {
+    const schedule = await prisma.workSchedule.findUnique({
+      where: { id: scheduleId },
+    });
+
+    if (!schedule) {
+      throw new NotFoundError(`Horario con ID ${scheduleId} no encontrado.`);
+    }
+    if (schedule.agencyId !== agencyId) {
+      throw new UnauthorizedError("No tienes permiso para ver este horario.");
+    }
+
+    res.status(200).json(schedule);
+  } catch (error) {
+    logger.error(
+      { err: error, scheduleId, agencyId },
+      "Error obteniendo horario"
+    );
+    next(error);
+  }
+};
+
 export const updateSchedule: RequestHandler = async (req, res, next) => {
   const scheduleId = req.params.id;
   const agencyId = req.headers["x-agency-id"] as string;

@@ -13,6 +13,7 @@ import {
   getMyAgency,
   updateMyAgency,
   inviteUser,
+  getMyUsers,
 } from "../controllers/agency.controller";
 
 const router = Router();
@@ -28,16 +29,11 @@ router.get("/me", getMyAgency);
 
 // PUT /agencies/me -> Actualizar datos de la agencia autenticada
 // Usamos /me para la ruta ya que la ID viene del token
-router.put(
-  "/me",
-  validateRequest(updateAgencySchema),
-  updateMyAgency
-);
+router.put("/me", validateRequest(updateAgencySchema), updateMyAgency);
 
-router.post(
-  "/invite-user",
-  validateRequest(inviteUserSchema),
-  inviteUser
-);
+router.post("/invite-user", validateRequest(inviteUserSchema), inviteUser);
+
+// GET /agencies/me/users -> Obtener todos los usuarios de la agencia autenticada
+router.get("/me/users", getMyUsers);
 
 export default router;

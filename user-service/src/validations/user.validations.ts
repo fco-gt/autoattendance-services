@@ -58,3 +58,11 @@ export const createUserInvitationSchema = z.object({
 export type CreateUserInvitationInput = z.infer<
   typeof createUserInvitationSchema
 >["body"];
+
+export const getUsersQuerySchema = z.object({
+  query: z.object({
+    agencyId: z.string().uuid({ message: "Agency ID is required" }),
+  }),
+});
+
+export type GetUsersQueryInput = z.infer<typeof getUsersQuerySchema>["query"];

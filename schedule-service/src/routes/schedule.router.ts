@@ -12,6 +12,7 @@ import {
   updateSchedule,
   deleteSchedule,
   getApplicableSchedule,
+  getSchedule,
 } from "../controllers/schedule.controller";
 
 const router = Router();
@@ -29,6 +30,9 @@ router.post("/", validateRequest(createScheduleSchema), createSchedule);
 
 // GET /schedules -> Obtener todos los horarios de la agencia autenticada
 router.get("/", getSchedules);
+
+// GET /schedules/:id -> Obtener un horario específico
+router.get("/:id", validateRequest(scheduleIdParamSchema), getSchedule);
 
 // PUT /schedules/:id -> Actualizar un horario específico
 router.put("/:id", validateRequest(updateScheduleSchema), updateSchedule);
