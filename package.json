@@ -1,0 +1,27 @@
+{
+  "name": "autoattendance-backend-services",
+  "version": "1.0.0",
+  "description": "Este repositorio contiene los servicios backend para la aplicación AutoAttendance, implementados utilizando una arquitectura de microservicios con autenticación centralizada.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "concurrently -n \"agency,gateway,attendance,schedule,user\" -c \"blue,green,red,yellow,magenta\" \"cd agency-service && npm run dev\" \"cd api-gateway && npm run dev\" \"cd attendance-service && npm run dev\" \"cd schedule-service && npm run dev\" \"cd user-service && npm run dev\"",
+    "install-all": "concurrently \"cd agency-service && npm install\" \"cd api-gateway && npm install\" \"cd attendance-service && npm install\" \"cd schedule-service && npm install\" \"cd user-service && npm install\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fco-gt/autoattendance-services.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/fco-gt/autoattendance-services/issues"
+  },
+  "homepage": "https://github.com/fco-gt/autoattendance-services#readme",
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "wait-on": "^8.0.3"
+  }
+}

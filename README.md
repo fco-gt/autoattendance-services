@@ -127,6 +127,9 @@ Sigue estos pasos para levantar el entorno de desarrollo local:
     ```
 
     _Verifica los scripts `dev` en los `package.json` de cada servicio._
+  
+
+    > Nota: Si deseas ejecutar todos los servicios en un solo terminal, puedes usar el comando `npm install-all` y luego `npm run dev` en el directorio raíz del proyecto.
 
 ## Variables de Entorno
 
