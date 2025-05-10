@@ -278,10 +278,18 @@ export class AttendanceService {
       where: { userId_date: { userId, date: today } },
       // Seleccionar campos relevantes para el usuario
       select: {
+        id: true,
+        userId: true,
+        agencyId: true,
+        date: true,
         checkInTime: true,
         checkOutTime: true,
         status: true,
-        date: true,
+        methodIn: true,
+        methodOut: true,
+        notes: true,
+        scheduleEntryTime: true,
+        scheduleExitTime: true,
       },
     });
     return record;
