@@ -51,7 +51,7 @@ export const sendActivationCode = async (
     });
 
     const mailOptions: SendMailOptions = {
-      from: "AutoAttendance <info@demomailtrap.co>",
+      from: "AutoAttendance " + `${process.env.MAILTRAP_FROM}`,
       to: to,
       subject: "Activa tu cuenta de AutoAttendance | Agencia " + agencyName,
       html: htmlContent,
