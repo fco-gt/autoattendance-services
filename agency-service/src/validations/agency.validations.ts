@@ -65,6 +65,8 @@ export const updateAgencySchema = z.object({
 export const inviteUserSchema = z.object({
   body: z.object({
     email: z.string().email("A valid email address is required"),
+    name: z.string().min(1, "Nombre no puede estar vacío"),
+    lastname: z.string().optional(),
   }),
 });
 

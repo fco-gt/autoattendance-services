@@ -29,16 +29,9 @@ router.get(
 );
 
 // --- Rutas para Usuarios ---
-router.post(
-  "/qr",
-  validateRequest(qrAttendanceSchema),
-  markQrAttendance
-);
+router.post("/qr", validateRequest(qrAttendanceSchema), markQrAttendance);
 
-router.get(
-  "/today",
-  getUserTodayStatus
-);
+router.get("/today", getUserTodayStatus);
 
 router.get(
   "/history/user",

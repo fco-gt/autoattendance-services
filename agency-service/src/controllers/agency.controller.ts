@@ -172,7 +172,11 @@ export const updateMyAgency: RequestHandler = async (req, res, next) => {
 
 export const inviteUser: RequestHandler = async (req, res, next) => {
   try {
-    const { email: userEmail } = req.body as InviteUserInput;
+    const {
+      email: userEmail,
+      name: userName,
+      lastname: userLastname,
+    } = req.body as InviteUserInput;
     const agencyId = req.headers["x-agency-id"] as string;
 
     const USER_SERVICE = process.env.USER_SERVICE_URL;
@@ -209,6 +213,8 @@ export const inviteUser: RequestHandler = async (req, res, next) => {
         {
           email: userEmail,
           agencyId: agencyId,
+          name: userName,
+          lastname: userLastname,
         }
       );
 

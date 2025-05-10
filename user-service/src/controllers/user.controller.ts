@@ -1,12 +1,11 @@
 import { RequestHandler, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { add } from "date-fns";
+import { add, isValid } from "date-fns";
 import { v4 as uuidv4 } from "uuid";
 import prisma from "../db";
 import {
   ActivateInvitationInput,
-  CreateUserInvitationInput,
   GetUsersQueryInput,
 } from "../validations/user.validations";
 import {
@@ -31,10 +30,55 @@ const userPublicSelect = {
   updatedAt: true,
 };
 
+// Verificar si existe el token de activación
+export const checkActivationCode: RequestHandler = async (req, res, next) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return next(new BadRequestError("Código de activación requerido"));
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { activationCode: token }, // Usa 'activationCode' para buscar
+    });
+
+    if (!user) {
+      throw new NotFoundError("Código de activación inválido");
+    }
+
+    if (user.status !== "PENDING") {
+      throw new ForbiddenError("La cuenta ya está activada");
+    }
+
+    if (user.codeExpiry && new Date() > user.codeExpiry) {
+      throw new ForbiddenError("El código de activación ha expirado");
+    }
+
+    if (user.passwordHash) {
+      throw new ForbiddenError("La cuenta ya está activada");
+    }
+
+    res
+      .status(200)
+      .json({ message: "Codigo de activación válido", isValid: true });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Controlador para que el usuario active su cuenta con el token
 export const activateInvitedUser: RequestHandler = async (req, res, next) => {
   try {
-    const { token, name, password } = req.body as ActivateInvitationInput;
+    const { token, password } = req.body as ActivateInvitationInput;
+
+    if (!token) {
+      return next(new BadRequestError("Código de activación requerido"));
+    }
+
+    if (!password) {
+      return next(new BadRequestError("Contraseña requerida"));
+    }
 
     const user = await prisma.user.findUnique({
       where: { activationCode: token },
@@ -57,7 +101,6 @@ export const activateInvitedUser: RequestHandler = async (req, res, next) => {
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
-        name,
         passwordHash: hashedPassword,
         status: "ACTIVE",
         activationCode: null,
@@ -189,7 +232,7 @@ export const validateUserAgency: RequestHandler = async (req, res, next) => {
 // POST /invite -> Usado por agencias para invitar usuarios
 export const createInvitation: RequestHandler = async (req, res, next) => {
   try {
-    const { email, agencyId } = req.body as CreateUserInvitationInput;
+    const { email, agencyId, name, lastname } = req.body;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
 
@@ -205,7 +248,8 @@ export const createInvitation: RequestHandler = async (req, res, next) => {
       data: {
         email,
         agencyId,
-        name: "",
+        name,
+        lastname,
         status: "PENDING",
         activationCode: activationToken,
         codeExpiry: expiresAt,

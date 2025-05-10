@@ -13,9 +13,13 @@ import {
   validateUserAgency,
   createInvitation,
   getUsersForAgency,
+  checkActivationCode,
 } from "../controllers/user.controller";
 
 const router = Router();
+
+// POST /users/validateToken -> Verifica si el token de activación es válido
+router.post("/validate-token", checkActivationCode);
 
 // POST /users/activate -> Activa una cuenta con código y establece contraseña
 router.post(
