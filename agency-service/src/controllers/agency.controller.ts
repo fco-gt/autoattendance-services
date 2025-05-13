@@ -102,7 +102,7 @@ export const loginAgency: RequestHandler = async (req, res, next) => {
 
     const token = jwt.sign(payload, jwtSecret, { expiresIn: "1h" });
 
-    res.status(200).json({ message: "Autenticación exitosa", token });
+    res.status(200).json({ message: "Autenticación exitosa", token, agency });
   } catch (error) {
     next(error);
   }
