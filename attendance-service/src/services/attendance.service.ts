@@ -27,6 +27,13 @@ interface ExternalData {
   } | null;
 }
 
+interface QrPayload {
+  agencyId: string;
+  type: "check-in" | "check-out";
+  iat: number;
+  exp: number;
+}
+
 export class AttendanceService {
   async markAttendance(params: {
     userId: string;
@@ -275,13 +282,73 @@ export class AttendanceService {
       throw new Error("No se ha configurado el secreto de la agencia");
     }
 
-    const token = jwt.sign({ agencyId, type, createdAt: new Date() }, secret, {
-      expiresIn: "10m",
-      algorithm: "HS256",
-    });
+    const token = jwt.sign(
+      {
+        agencyId,
+        type,
+      },
+      secret,
+      {
+        expiresIn: "10m",
+        algorithm: "HS256",
+      }
+    );
 
     const url = `${GATEWAY_URL}/v1/api/attendance/qr?token=${token}&type=${type}`;
 
     return url;
+  }
+
+  async verifyQrToken(token: string) {
+    const secret = process.env.AGENCY_ATTENDANCE_SECRET;
+
+    if (!secret) {
+      throw new Error("No se ha configurado el secreto de la agencia");
+    }
+
+    let payload: QrPayload;
+
+    try {
+      payload = jwt.verify(token, secret) as QrPayload;
+
+      if (payload.exp < Math.floor(Date.now() / 1000)) {
+        throw new BadRequestError("El QR ha expirado");
+      }
+
+      return payload;
+    } catch (err) {
+      if (err instanceof jwt.TokenExpiredError) {
+        throw new BadRequestError("El QR ha expirado");
+      }
+      throw new BadRequestError("Token de QR inválido");
+    }
+  }
+
+  async markQrAttendance(
+    userId: string,
+    token: string,
+    type: "check-in" | "check-out"
+  ) {
+    const { agencyId, type: qrType } = await this.verifyQrToken(token);
+
+    if (qrType !== type) {
+      throw new BadRequestError(
+        "Tipo de QR no coincide con el tipo de asistencia"
+      );
+    }
+
+    const record = await this.markAttendance({
+      userId,
+      agencyId,
+      method: AttendanceMethod.QR,
+      type,
+    });
+
+    logger.info(
+      { recordId: record.id, userId, agencyId },
+      "Asistencia QR registrada"
+    );
+
+    return record;
   }
 }

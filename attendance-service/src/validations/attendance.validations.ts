@@ -39,7 +39,14 @@ export const attendanceHistoryQuerySchema = z.object({
 });
 
 export const generateQrLinkSchema = z.object({
+  body: z.object({
+    type: attendanceTypeSchema,
+  }),
+});
+
+export const markQrAttendanceSchema = z.object({
   query: z.object({
+    token: z.string(),
     type: attendanceTypeSchema,
   }),
 });

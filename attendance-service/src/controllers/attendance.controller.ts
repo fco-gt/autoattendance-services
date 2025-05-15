@@ -118,3 +118,35 @@ export const generateQrLink: RequestHandler = async (req, res, next) => {
     next(error);
   }
 };
+
+// --- Marcar Asistencia QR ---
+export const markQrAttendance: RequestHandler = async (req, res, next) => {
+  const token = req.query.token as string | undefined;
+  const type = req.query.type as string | undefined;
+  const userId = req.headers["x-user-id"] as string | undefined;
+
+  if (!userId) {
+    return next(new BadRequestError("Usuario no autenticado"));
+  }
+  if (!token) {
+    return next(new BadRequestError("Falta el token QR"));
+  }
+  if (!type || !["check-in", "check-out"].includes(type)) {
+    return next(new BadRequestError("Tipo de asistencia inválido"));
+  }
+
+  try {
+    const record = await attendanceService.markQrAttendance(
+      userId,
+      token,
+      type as "check-in" | "check-out"
+    );
+
+    const status = type === "check-in" ? 201 : 200;
+
+    res.status(status).json(record);
+  } catch (err: any) {
+    logger.error({ err, userId }, "Error marcando asistencia QR");
+    next(err);
+  }
+};

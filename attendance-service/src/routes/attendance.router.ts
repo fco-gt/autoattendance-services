@@ -4,9 +4,11 @@ import {
   manualAttendanceSchema,
   attendanceHistoryQuerySchema,
   generateQrLinkSchema,
+  markQrAttendanceSchema,
 } from "../validations/attendance.validations";
 import {
   markManualAttendance,
+  markQrAttendance,
   getAgencyHistory,
   getUserHistory,
   getUserTodayStatus,
@@ -28,9 +30,15 @@ router.get(
   getAgencyHistory
 );
 
-router.post("/qr", validateRequest(generateQrLinkSchema), generateQrLink);
+router.post(
+  "/qr/generate",
+  validateRequest(generateQrLinkSchema),
+  generateQrLink
+);
 
 // --- Rutas para Usuarios ---
+router.get("/qr", validateRequest(markQrAttendanceSchema), markQrAttendance);
+
 router.get("/today", getUserTodayStatus);
 
 router.get(
