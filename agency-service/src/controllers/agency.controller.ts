@@ -102,7 +102,12 @@ export const loginAgency: RequestHandler = async (req, res, next) => {
 
     const token = jwt.sign(payload, jwtSecret, { expiresIn: "1h" });
 
-    res.status(200).json({ message: "Autenticación exitosa", token, agency });
+    // Remover campos sensibles
+    const { passwordHash, ...safeAgency } = agency;
+
+    res
+      .status(200)
+      .json({ message: "Autenticación exitosa", token, agency: safeAgency });
   } catch (error) {
     next(error);
   }

@@ -169,7 +169,11 @@ export const loginUser: RequestHandler = async (req, res, next) => {
       expiresIn: "1h",
     });
 
-    res.status(200).json({ message: "Autenticación exitosa", token, user });
+    const { passwordHash, ...safeUser } = user;
+
+    res
+      .status(200)
+      .json({ message: "Autenticación exitosa", token, user: safeUser });
   } catch (error) {
     next(error);
   }
