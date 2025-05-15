@@ -289,7 +289,7 @@ export class AttendanceService {
       },
       secret,
       {
-        expiresIn: "10m",
+        expiresIn: "1h",
         algorithm: "HS256",
       }
     );
