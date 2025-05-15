@@ -2,15 +2,15 @@ import { Router } from "express";
 import { validateRequest } from "../middlewares/validateRequest";
 import {
   manualAttendanceSchema,
-  qrAttendanceSchema,
   attendanceHistoryQuerySchema,
+  generateQrLinkSchema,
 } from "../validations/attendance.validations";
 import {
   markManualAttendance,
-  markQrAttendance,
   getAgencyHistory,
   getUserHistory,
   getUserTodayStatus,
+  generateQrLink,
 } from "../controllers/attendance.controller";
 
 const router = Router();
@@ -28,9 +28,9 @@ router.get(
   getAgencyHistory
 );
 
-// --- Rutas para Usuarios ---
-router.post("/qr", validateRequest(qrAttendanceSchema), markQrAttendance);
+router.post("/qr", validateRequest(generateQrLinkSchema), generateQrLink);
 
+// --- Rutas para Usuarios ---
 router.get("/today", getUserTodayStatus);
 
 router.get(

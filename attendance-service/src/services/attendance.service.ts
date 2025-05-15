@@ -1,10 +1,6 @@
 import axios from "axios";
 import prisma from "../db";
-import {
-  AttendanceMethod,
-  AttendanceStatus,
-  AttendanceRecord,
-} from "../../generated/prisma";
+import { AttendanceMethod, AttendanceRecord } from "../../generated/prisma";
 import logger from "../logger";
 import {
   BadRequestError,
@@ -15,46 +11,39 @@ import {
 import {
   calculateCheckInStatus,
   getDateOnly,
-  getDayOfWeekISO,
-  isCheckOutAllowed,
   parseTimeStringToDate,
   formatForLog,
 } from "../utils/timeUtils";
 import { addDays } from "date-fns";
+import jwt from "jsonwebtoken";
 
 const GATEWAY_URL = process.env.GATEWAY_URL;
-
-// --- Interfaz Placeholder para datos de otros servicios ---
-// Esto simula lo que obtendríamos al llamar a otros servicios
 interface ExternalData {
   schedule?: {
-    entryTime: string; // "HH:MM"
-    exitTime: string; // "HH:MM"
+    entryTime: string;
+    exitTime: string;
     gracePeriodMinutes: number;
     daysOfWeek: number[];
   } | null;
 }
 
 export class AttendanceService {
-  // --- MÉTODO CENTRAL: Marcar Asistencia ---
   async markAttendance(params: {
     userId: string;
     agencyId: string;
     method: AttendanceMethod;
     type: "check-in" | "check-out";
-    currentTime?: Date; // Para testing o registros manuales en otra fecha
+    currentTime?: Date;
     notes?: string;
   }): Promise<AttendanceRecord> {
     const { userId, agencyId, method, type, notes } = params;
-    const now = params.currentTime || new Date(); // Hora actual o la provista
-    const todayDate = getDateOnly(now); // Fecha del registro (medianoche UTC)
+    const now = params.currentTime || new Date();
+    const todayDate = getDateOnly(now);
 
     logger.info(
       { userId, agencyId, type, method, time: formatForLog(now) },
       "Intentando marcar asistencia"
     );
-
-    // --- PASO 1: Validar Usuario ---
 
     try {
       const validationUrl = `${GATEWAY_URL}/v1/api/users/validate`;
@@ -89,7 +78,6 @@ export class AttendanceService {
       throw error;
     }
 
-    // --- PASO 2: Obtener Horario Aplicable ---
     let scheduleData: ExternalData["schedule"] = null;
 
     try {
@@ -141,7 +129,6 @@ export class AttendanceService {
       );
     }
 
-    // Convertir horas HH:MM a objetos Date para comparar
     const scheduleEntryTime = parseTimeStringToDate(
       scheduleData.entryTime,
       now
@@ -157,7 +144,6 @@ export class AttendanceService {
       );
     }
 
-    // --- PASO 3: Lógica de Check-in / Check-out ---
     const existingRecord = await prisma.attendanceRecord.findUnique({
       where: { userId_date: { userId, date: todayDate } },
     });
@@ -179,20 +165,21 @@ export class AttendanceService {
           agencyId,
           checkInTime: now,
           date: todayDate,
-          status, // ON_TIME o LATE
+          status,
           methodIn: method,
           notes,
-          scheduleEntryTime: scheduleData.entryTime, // Guardamos "HH:MM"
-          scheduleExitTime: scheduleData.exitTime, // Guardamos "HH:MM"
+          scheduleEntryTime: scheduleData.entryTime,
+          scheduleExitTime: scheduleData.exitTime,
         },
       });
+
       logger.info(
         { recordId: newRecord.id, userId, status },
         "Check-in registrado."
       );
+
       return newRecord;
     } else {
-      // type === 'check-out'
       if (!existingRecord) {
         throw new BadRequestError(
           "Debe registrar la entrada antes de la salida."
@@ -202,18 +189,12 @@ export class AttendanceService {
         throw new ConflictError("Ya se registró una salida para hoy.");
       }
 
-      // Opcional: Validar si ya es hora de salida
-      // const allowedToCheckout = isCheckOutAllowed(now, scheduleExitTime);
-      // if (!allowedToCheckout) {
-      //     throw new BadRequestError(`Aún no es hora de marcar salida (después de ${scheduleData.exitTime}).`);
-      // }
-
       const updatedRecord = await prisma.attendanceRecord.update({
         where: { id: existingRecord.id },
         data: {
           checkOutTime: now,
           methodOut: method,
-          notes: notes || existingRecord.notes, // Actualizar notas si vienen
+          notes: notes || existingRecord.notes,
         },
       });
       logger.info(
@@ -224,34 +205,29 @@ export class AttendanceService {
     }
   }
 
-  // --- Obtener Historial ---
   async getHistory(params: {
-    agencyId?: string; // Si consulta la agencia
-    userId?: string; // Si consulta el usuario o la agencia filtra por uno
+    agencyId?: string;
+    userId?: string;
     startDate: Date;
     endDate: Date;
   }) {
     const { agencyId, userId, startDate, endDate } = params;
-
-    // Asegurar que las fechas cubran días completos en UTC
     const start = getDateOnly(startDate);
-    const end = getDateOnly(addDays(endDate, 1)); // Hasta el inicio del día *siguiente*
+    const end = getDateOnly(addDays(endDate, 1));
 
     const whereClause: any = {
       date: {
         gte: start,
-        lt: end, // Menor que el inicio del día siguiente
+        lt: end,
       },
     };
 
     if (userId) {
       whereClause.userId = userId;
-      // Si también viene agencyId, podemos verificar que el userId pertenezca (redundante si el token ya lo valida)
       if (agencyId) {
-        whereClause.agencyId = agencyId; // Filtra también por agencia
+        whereClause.agencyId = agencyId;
       }
     } else if (agencyId) {
-      // Si solo viene agencyId, trae todos los de la agencia
       whereClause.agencyId = agencyId;
     } else {
       throw new BadRequestError(
@@ -266,17 +242,13 @@ export class AttendanceService {
       orderBy: [{ date: "desc" }, { checkInTime: "desc" }],
     });
 
-    // TODO: Enriquecer con datos del usuario (nombre, etc.) llamando a User Service
-    // Por ahora, solo devolvemos los IDs
     return records;
   }
 
-  // --- Obtener Estado de Hoy (simplificado) ---
   async getTodayStatusForUser(userId: string) {
     const today = getDateOnly(new Date());
     const record = await prisma.attendanceRecord.findUnique({
       where: { userId_date: { userId, date: today } },
-      // Seleccionar campos relevantes para el usuario
       select: {
         id: true,
         userId: true,
@@ -292,6 +264,24 @@ export class AttendanceService {
         scheduleExitTime: true,
       },
     });
+
     return record;
+  }
+
+  async generateQRLink(agencyId: string, type: "check-in" | "check-out") {
+    const secret = process.env.AGENCY_ATTENDANCE_SECRET;
+
+    if (!secret) {
+      throw new Error("No se ha configurado el secreto de la agencia");
+    }
+
+    const token = jwt.sign({ agencyId, type, createdAt: new Date() }, secret, {
+      expiresIn: "10m",
+      algorithm: "HS256",
+    });
+
+    const url = `${GATEWAY_URL}/v1/api/attendance/qr?token=${token}&type=${type}`;
+
+    return url;
   }
 }

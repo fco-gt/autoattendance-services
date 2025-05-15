@@ -1,7 +1,7 @@
-import { RequestHandler, Response, NextFunction } from "express";
+import { RequestHandler } from "express";
 import { AttendanceMethod } from "../../generated/prisma";
 import { AttendanceService } from "../services/attendance.service";
-import { BadRequestError, NotFoundError } from "../errors/HttpErrors";
+import { BadRequestError } from "../errors/HttpErrors";
 import logger from "../logger";
 
 const attendanceService = new AttendanceService();
@@ -29,35 +29,6 @@ export const markManualAttendance: RequestHandler = async (req, res, next) => {
     res.status(type === "check-in" ? 201 : 200).json(result);
   } catch (error) {
     logger.error({ err: error, agencyId, userId }, "Error en marca manual");
-    next(error);
-  }
-};
-
-// --- Marcar Asistencia QR (Usuario) ---
-export const markQrAttendance: RequestHandler = async (req, res, next) => {
-  const { type } = req.body;
-
-  const userId = req.headers["x-user-id"] as string;
-  const agencyId = req.headers["x-agency-id"] as string;
-
-  if (!userId || !agencyId) {
-    return next(
-      new BadRequestError(
-        "Usuario no autenticado correctamente o falta agencyId"
-      )
-    );
-  }
-
-  try {
-    const result = await attendanceService.markAttendance({
-      userId,
-      agencyId,
-      method: AttendanceMethod.QR,
-      type,
-    });
-    res.status(type === "check-in" ? 201 : 200).json(result);
-  } catch (error) {
-    logger.error({ err: error, userId, agencyId }, "Error en marca QR");
     next(error);
   }
 };
@@ -128,6 +99,22 @@ export const getUserTodayStatus: RequestHandler = async (req, res, next) => {
       { err: error, userId },
       "Error obteniendo estado hoy (usuario)"
     );
+    next(error);
+  }
+};
+
+// --- Generar Link QR (Usuario) ---
+export const generateQrLink: RequestHandler = async (req, res, next) => {
+  const { type } = req.body;
+  const agencyId = req.headers["x-agency-id"] as string;
+
+  if (!agencyId) return next(new BadRequestError("Agencia no autenticada"));
+
+  try {
+    const url = await attendanceService.generateQRLink(agencyId, type);
+    res.status(200).json({ url });
+  } catch (error) {
+    logger.error({ err: error, agencyId }, "Error generando link QR");
     next(error);
   }
 };
