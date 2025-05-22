@@ -18,6 +18,8 @@ import { addDays } from "date-fns";
 import jwt from "jsonwebtoken";
 
 const GATEWAY_URL = process.env.GATEWAY_URL;
+const PUBLIC_GATEWAY_URL = process.env.PUBLIC_GATEWAY_URL;
+
 interface ExternalData {
   schedule?: {
     entryTime: string;
@@ -294,7 +296,7 @@ export class AttendanceService {
       }
     );
 
-    const url = `${GATEWAY_URL}/v1/api/attendance/qr?token=${token}&type=${type}`;
+    const url = `${PUBLIC_GATEWAY_URL}/v1/api/attendance/qr?token=${token}&type=${type}`;
 
     return url;
   }
