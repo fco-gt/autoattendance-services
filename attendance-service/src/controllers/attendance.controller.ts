@@ -144,7 +144,14 @@ export const markQrAttendance: RequestHandler = async (req, res, next) => {
 
     const status = type === "check-in" ? 201 : 200;
 
-    res.status(status).json(record);
+    res.status(status).json({
+      success: true,
+      data: record,
+      message:
+        type === "check-in"
+          ? "Asistencia QR registrada"
+          : "Asistencia QR cancelada",
+    });
   } catch (err: any) {
     logger.error({ err, userId }, "Error marcando asistencia QR");
     next(err);
