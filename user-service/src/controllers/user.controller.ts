@@ -144,7 +144,6 @@ export const loginUser: RequestHandler = async (req, res, next) => {
     }
 
     if (user.status !== "ACTIVE" || !user.passwordHash) {
-      // Si no está activo O si aún no tiene password (nunca activó)
       throw new ForbiddenError(
         "La cuenta no está activa o requiere activación"
       );
@@ -227,7 +226,6 @@ export const validateUserAgency: RequestHandler = async (req, res, next) => {
       { err: error, userId, agencyId },
       "Error en validación interna de usuario"
     );
-    // No lanzar error, simplemente devolver false en caso de fallo
     res.status(200).json({ isValid: false });
   }
 };
